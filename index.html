@@ -2,111 +2,334 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
-  <style>
-    body {
-      background-color: #000;
-      margin: 0;
-      padding: 0;
-    }
-    
-    canvas {
-      background-color: #fff;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
 </head>
 
 <body>
-  <canvas id="canvas" width="800" height="800">
-    Your browser does not support the canvas element.
-  </canvas>
+    <script>
+        function getCtx(selector, width, height) {
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style = "border:1px solid red";
+            document.querySelector(selector).appendChild(canvas);
+            return canvas.getContext('2d');
+        }
+
+        function imgLoad(obj, fn) {
+            var imgObj = {};
+            var imgTotal = 0;
+            var loadTotal = 0;
+            for (var key in obj) {
+                imgTotal++;
+                var img = new Image();
+                img.src = obj[key];
+                imgObj[key] = img;
+                img.onload = function () {
+                    loadTotal++;
+                    if (imgTotal == loadTotal) {
+                        fn(imgObj)
+                    }
+                }
+            }
+        }
+        //创建背景天空实例
+        var Sky = (function () {
+            var num = 0;
+
+            function Sky(options) {
+                this.ctx = options.ctx;
+                this.img = options.img;
+                this.w = this.img.width;
+                this.h = this.img.height;
+                this.x = options.x || 0;
+                this.y = options.y || 0;
+                this.speed = options.speed || 2;
+                num++;
+            };
+            Sky.prototype = {
+                draw: function () {
+                    this.ctx.drawImage(this.img, this.x, this.y);
+                    this.updata();
+                },
+                updata: function () {
+                    this.x -= this.speed;
+                    if (this.x < -this.w) {
+                        this.x += this.w * num;
+                    }
+                }
+            }
+            return Sky;
+        })();
+
+        //创建大地实例
+        var Land = (function () {
+            var num = 0;
+
+            function Land(options) {
+                this.ctx = options.ctx;
+                this.img = options.img;
+                this.w = this.img.width;
+                this.h = this.img.height;
+                this.x = options.x || 0;
+                this.y = options.y || 0;
+                this.speed = options.speed || 2;
+                num++;
+            };
+            Land.prototype = {
+                draw: function () {
+                    this.ctx.drawImage(this.img, this.x, this.y);
+                    this.updata();
+                },
+                updata: function () {
+                    this.x -= this.speed;
+                    if (this.x < -this.w) {
+                        this.x += this.w * num;
+                    }
+                }
+            }
+            return Land;
+        })();
+
+        var Timer = (function () {
+            function Timer(options) {
+                this.ctx = options.ctx;
+                this.x = options.x || this.ctx.canvas.width;
+                this.y = options.y || 0;
+                this.fillStyle = options.fillStyll || 'hotpink';
+                this.textAlign = options.textAlign || 'right';
+                this.textBaseline = options.textBaseline || 'top';
+                this.font = options.font || '700 20px 宋体';
+                this.time = options.time || 0;
+                this.totalTime = options.totalTime || Date.now();
+            };
+            Timer.prototype = {
+                draw: function () {
+                    this.updata();
+                    var text = this.format();
+                    this.ctx.save();
+                    this.ctx.fillStyle = this.fillStyle;
+                    this.ctx.textAlign = this.textAlign;
+                    this.ctx.textBaseline = this.textBaseline;
+                    this.ctx.font = this.font;
+                    this.ctx.fillText(text, this.x, this.y);
+                    this.ctx.restore();
+                },
+                updata: function () {
+                    var now = Date.now();
+                    this.time += now - this.totalTime;
+                    this.totalTime = now;
+                },
+                format: function () {
+                    var hours = Math.floor(this.time / (60 * 60 * 1000));
+                    var minutes = Math.floor(this.time % (60 * 60 * 1000) / (60 * 1000));
+                    var seconds = Math.floor(this.time % (60 * 1000) / 1000)
+                    return hours + ':' + minutes + ':' + seconds;
+                }
+            }
+            return Timer;
+        })();
+
+
+        var Bird = (function () {
+            function Bird(options) {
+                this.ctx = options.ctx;
+                this.img = options.img;
+                this.x = options.x || 100;
+                this.y = options.y || 50;
+                this.row = options.row || 3;
+                this.col = options.col || 1;
+                this.w = this.img.width / this.row;
+                this.h = this.img.height / this.col;
+                this.speed = options.speed || 2;
+                this.aSpeed = 0.2;
+                this.index = 0;
+
+                this.radian = Math.PI / 18;
+                this.maxRadian = Math.PI / 4;
+                this.minRadian = -Math.PI / 4;
+            }
+            Bird.prototype = {
+                draw: function () {
+                    this.ctx.save();
+                    this.ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
+                    var rotateRadian = this.radian * this.speed;
+                    rotateRadian = rotateRadian > this.maxRadian ? this.maxRadian : rotateRadian;
+                    rotateRadian = rotateRadian < this.minRadian ? this.minRadian : rotateRadian;
+                    this.ctx.rotate(rotateRadian);
+                    this.ctx.drawImage(this.img,
+                        this.w * this.index, 0, this.w, this.h, -this.w / 2, -this.h / 2, this.w,
+                        this.h);
+                    this.ctx.restore();
+                    this.updata();
+                },
+                updata: function () {
+                    this.index = ++this.index % this.row;
+                    this.y += this.speed;
+                    this.speed += this.aSpeed;
+                },
+                flyUp: function () {
+                    this.speed = -5;
+                }
+            }
+            return Bird;
+        })()
+        var Pipe = (function () {
+            var num = 0;
+
+            function Pipe(options) {
+                this.ctx = options.ctx;
+                this.imgTop = options.imgTop;
+                this.imgBottom = options.imgBottom;
+                this.w = this.imgTop.width;
+                this.h = this.imgTop.height;
+                this.x = options.x || 200;
+                this.yTop = 0;
+                this.yBottom = 0;
+                this.maxHeight = options.maxHeight || 400;
+                this.minHeight = options.minHeight || 50;
+                this.pipeSpace = options.pipeSpace || 80;
+                this.space = options.space || 80;
+                this.speed = options.speed || 3;
+                this.aSpeed = 0.001;
+                this.initPipeY();
+                num++;
+            }
+            Pipe.prototype = {
+                draw: function () {
+                    this.ctx.drawImage(this.imgTop, this.x, this.yTop);
+                    this.ctx.drawImage(this.imgBottom, this.x, this.yBottom);
+                    this.ctx.rect(this.x, this.yTop, this.w, this.h)
+                    this.ctx.rect(this.x, this.yBottom, this.w, this.h)
+                    this.updata();
+                },
+                updata: function () {
+                    this.x -= this.speed;
+                    this.speed += this.aSpeed;
+                    if (this.x < -this.w) {
+                        this.x += (this.w + this.space) * num;
+                        this.initPipeY();
+                    }
+                },
+                initPipeY: function () {
+                    var height = Math.random() * (this.maxHeight - this.minHeight) + this.minHeight;
+                    this.yTop = height - this.h;
+                    this.yBottom = height + this.pipeSpace;
+                }
+            }
+            return Pipe;
+        })();
+
+        function getNumber(canvasWidth, roleWidth) {
+            return Math.ceil(canvasWidth / roleWidth) + 1;
+        }
+
+        imgLoad({
+            sky: 'img/sky.png',
+            land: 'img/land.png',
+            bird: 'img/birds.png',
+            imgTop: 'img/pipeDown.png',
+            imgBottom: 'img/pipeUp.png'
+        }, function (imgObj) {
+            flyBird(imgObj);
+        })
+
+        function flyBird(imgObj) {
+            var ctx = getCtx('body', imgObj.sky.width, imgObj.sky.height);
+
+            function birdIsDie() {
+                var bird = roles.bird[0];
+
+                // 飞出天空，撞向大地，或者撞管道都死
+                if (bird.y < -bird.h || bird.y > (ctx.canvas.height - imgObj.land.height - bird.h + 20)) {
+                    return true;
+                } else if (ctx.isPointInPath((bird.x + bird.w / 2), (bird.y + bird.h / 2))) {
+                    return true;
+                }
+
+                return false;
+            }
+            var roles = {
+                sky: [],
+                pipe: [],
+                land: [],
+                timer: [],
+                bird: []
+            }
+            var skyLen = getNumber(ctx.canvas.width, imgObj.sky.width);
+            for (var i = 0; i < skyLen; i++) {
+                roles.sky.push(new Sky({
+                    ctx: ctx,
+                    img: imgObj.sky,
+                    x: imgObj.sky.width * i
+                }))
+            }
+            var landLen = getNumber(ctx.canvas.width, imgObj.land.width);
+            for (var i = 0; i < landLen; i++) {
+                roles.land.push(new Land({
+                    ctx: ctx,
+                    img: imgObj.land,
+                    x: imgObj.land.width * i,
+                    y: ctx.canvas.height - imgObj.land.height
+                }))
+            }
+            var pipeLen = getNumber(ctx.canvas.width, imgObj.imgTop.width + 150);
+            for (var i = 0; i < pipeLen; i++) {
+                roles.pipe.push(new Pipe({
+                    ctx: ctx,
+                    imgTop: imgObj.imgTop,
+                    imgBottom: imgObj.imgBottom,
+                    space: 150,
+                    pipeSpace: 150,
+                    maxHeight: 300,
+                    x: 300 + (imgObj.imgTop.width + 150) * i
+                }))
+            }
+            roles.timer.push(new Timer({
+                ctx: ctx
+            }));
+            roles.bird.push(new Bird({
+                ctx: ctx,
+                img: imgObj.bird,
+            }));
+            var birdDie = false;
+            (function loop() {
+                requestAnimationFrame(function () {
+                    if (!birdDie) {
+                        if (!birdIsDie()) {
+                            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                            ctx.beginPath();
+                            for (var key in roles) {
+                                roles[key].forEach(function (role) {
+                                    role.draw();
+                                })
+                            }
+                        }
+                    }
+                    loop();
+                })
+
+
+            })();
+            document.onkeydown = function (e) {
+                if (e.keyCode == 13) {
+                    birdDie = !birdDie;
+                    // birdIsDie() =!birdIsDie();
+                }
+                if (e.keyCode == 32) {
+                    e.preventDefault();
+                    roles.bird[0].flyUp();
+                }
+            }
+            // setInterval(function () {
+
+            // }, 1000 / 60)
+
+        }
+    </script>
 </body>
 
 </html>
-<script>
-  var canvas = document.querySelector('#canvas');
-  var c1 = canvas.getContext('2d');
-  var x = 400;
-  var y = 400;
-  var r = 150;
-  var date = null;
-  var hour = null;
-  var minute = null;
-  var second = null;
-  var hourLine = 0;
-  var minLine = 0;
-  var secLine = 0;
-  toDate();
-  setInterval(function () {
-    toDate();
-  }, 100)
- 
-  function toDate() {
-    c1.clearRect(0, 0, canvas.width, canvas.height)
-    date = new Date();
-    hour = date.getHours();
-    minute = date.getMinutes();
-    second = date.getSeconds();
-    hourLine = (hour * 30 - 90 + minute / 2) * Math.PI / 180;
-    minLine = (minute * 6 - 90) * Math.PI / 180;
-    secLine = (second * 6 - 90) * Math.PI / 180;
-
-    c1.lineWidth = 1;
-    c1.beginPath();
-    for (var i = 0; i < 60; i++) {
-      c1.moveTo(x, y);
-      c1.arc(x, y, r, (6 * i * Math.PI / 180), (6 * (i + 1) * Math.PI / 180), false);
-    }
-    c1.closePath();
-    c1.stroke();
-
-    c1.fillStyle = 'white';
-    c1.beginPath();
-    c1.moveTo(x, y);
-    c1.arc(x, y, r * 19 / 20, 0, (360 * Math.PI / 180), false);
-    c1.closePath();
-    c1.fill();
-
-    c1.lineWidth = 3;
-    c1.beginPath();
-    for (var i = 0; i < 12; i++) {
-      c1.moveTo(x, y);
-      c1.arc(x, y, r, (30 * i * Math.PI / 180), (30 * (i + 1) * Math.PI / 180), false);
-    }
-    c1.closePath();
-    c1.stroke();
-
-    c1.fillStyle = 'white';
-    c1.beginPath();
-    c1.moveTo(x, y);
-    c1.arc(x, y, r * 18 / 20, 0, (360 * Math.PI / 180), false);
-    c1.closePath();
-    c1.fill();
-
-
-    c1.lineWidth = 1;
-    c1.beginPath();
-    c1.moveTo(x, y);
-    c1.arc(x, y, r * 17 / 20, secLine, secLine, false);
-    c1.closePath();
-    c1.stroke();
-
-    c1.lineWidth = 3;
-    c1.beginPath();
-    c1.moveTo(x, y);
-    c1.arc(x, y, r * 15 / 20, minLine, minLine, false);
-    c1.closePath();
-    c1.stroke();
-
-    c1.lineWidth = 5;
-    c1.beginPath();
-    c1.moveTo(x, y);
-    c1.arc(x, y, r * 10 / 20, hourLine, hourLine, false);
-    c1.closePath();
-    c1.stroke();
-
-  }
-</script>

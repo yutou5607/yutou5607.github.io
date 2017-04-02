@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    body {
+      background-color: #000;
+      margin: 0;
+      padding: 0;
+    }
+    
+    canvas {
+      background-color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas" width="800" height="800">
+    Your browser does not support the canvas element.
+  </canvas>
+</body>
+
+</html>
+<script>
+  var canvas = document.querySelector('#canvas');
+  var c1 = canvas.getContext('2d');
+  var x = 400;
+  var y = 400;
+  var r = 150;
+  var date = null;
+  var hour = null;
+  var minute = null;
+  var second = null;
+  var hourLine = 0;
+  var minLine = 0;
+  var secLine = 0;
+  toDate();
+  setInterval(function () {
+    toDate();
+  }, 100)
+ 
+  function toDate() {
+    c1.clearRect(0, 0, canvas.width, canvas.height)
+    date = new Date();
+    hour = date.getHours();
+    minute = date.getMinutes();
+    second = date.getSeconds();
+    hourLine = (hour * 30 - 90 + minute / 2) * Math.PI / 180;
+    minLine = (minute * 6 - 90) * Math.PI / 180;
+    secLine = (second * 6 - 90) * Math.PI / 180;
+
+    c1.lineWidth = 1;
+    c1.beginPath();
+    for (var i = 0; i < 60; i++) {
+      c1.moveTo(x, y);
+      c1.arc(x, y, r, (6 * i * Math.PI / 180), (6 * (i + 1) * Math.PI / 180), false);
+    }
+    c1.closePath();
+    c1.stroke();
+
+    c1.fillStyle = 'white';
+    c1.beginPath();
+    c1.moveTo(x, y);
+    c1.arc(x, y, r * 19 / 20, 0, (360 * Math.PI / 180), false);
+    c1.closePath();
+    c1.fill();
+
+    c1.lineWidth = 3;
+    c1.beginPath();
+    for (var i = 0; i < 12; i++) {
+      c1.moveTo(x, y);
+      c1.arc(x, y, r, (30 * i * Math.PI / 180), (30 * (i + 1) * Math.PI / 180), false);
+    }
+    c1.closePath();
+    c1.stroke();
+
+    c1.fillStyle = 'white';
+    c1.beginPath();
+    c1.moveTo(x, y);
+    c1.arc(x, y, r * 18 / 20, 0, (360 * Math.PI / 180), false);
+    c1.closePath();
+    c1.fill();
+
+
+    c1.lineWidth = 1;
+    c1.beginPath();
+    c1.moveTo(x, y);
+    c1.arc(x, y, r * 17 / 20, secLine, secLine, false);
+    c1.closePath();
+    c1.stroke();
+
+    c1.lineWidth = 3;
+    c1.beginPath();
+    c1.moveTo(x, y);
+    c1.arc(x, y, r * 15 / 20, minLine, minLine, false);
+    c1.closePath();
+    c1.stroke();
+
+    c1.lineWidth = 5;
+    c1.beginPath();
+    c1.moveTo(x, y);
+    c1.arc(x, y, r * 10 / 20, hourLine, hourLine, false);
+    c1.closePath();
+    c1.stroke();
+
+  }
+</script>
